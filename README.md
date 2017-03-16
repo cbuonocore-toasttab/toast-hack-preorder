@@ -11,6 +11,12 @@ Delivers email formatted with d3 charts and visualizations for the required mate
 * npm install
 * node index.js
 
+Configurable to either send order email immediately, or start a server which is currently set to send pre-order emails every day at 8:00am each morning.
+
+## Running Tests
+* npm test
+
+See the test/ folder.
 
 ## Meeting Notes - 3/10/16
 1. Request for orders on a particular business date (returns all the orders that are associated with a particular day including pre-orders).

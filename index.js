@@ -85,39 +85,43 @@ function appAuth(cb) {
     });
 }
 
+var SCHEDULED_HOUR = 18; // 8
+
 var nextScheduled = null;
 function scheduleNextRunTime() {
     var now = moment(new Date());
-    var todayAtEight = moment(now).hours(8).minutes(0).seconds(0)
-    var nextRunTime = todayAtEight;
-    if (now.isAfter(todayAtEight)) {
+    var runTime = moment(now).hours(SCHEDULED_HOUR).minutes(0).seconds(0)
+    var nextRunTime = runTime;
+    if (now.isAfter(runTime)) {
         nextRunTime = nextRunTime.add(1, 'days')
     }
     var formattedRunTime = nextRunTime.format('YYYYMMDD');
     schedule.scheduleJob(nextRunTime.toDate(), function() {
             getOrdersForDate(formattedRunTime);
     });
-    console.log("Scheduling next Preorder email for : " + nextRunTime.toDate());
+    console.log("Scheduling next Preorder email for : " + nextRunTime.toDate() + 
+        " (" + formattedRunTime + ")");
 }
 
 // ** Start Server ** //
 
 var PORT = 3001;
 // Authenticate prior to app start.
-var runServer = false;
+var runServer = true;
 // yyyymmdd
-var dateString = "20170325";
 if (runServer) {
     console.log("Setting up server...")
     appAuth(function() {
         app.listen(PORT,function(){
-            console.log("Server started on Port %d", PORT);
+            console.log("Token retrieved.")
+            console.log("Server started on port %d.", PORT);
             scheduleNextRunTime();
         });
     });
 } else {
     // Retrieve orders now.
     appAuth(function() {
+        var dateString = "20170325";
         getOrdersForDate(dateString);
     });
     // var content = 'Embedded image: <img src="cid:unique@kreata.ee"/>';
