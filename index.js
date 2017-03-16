@@ -30,17 +30,27 @@ app.use(cors())
 
 var token = null;
 
+function getOrdersForDate(dateString) {
+    var promise = toast.getOrdersForDate(token, dateString);
+    promise.then(function(res) {
+        // console.log(res);
+        toast.aggregateOrders(token, dateString);
+    }).catch(function(err) {
+        console.error("Fatal: " + err);
+    });
+}
+
 // Tell express what to dowhen the /orders route is requested.
 app.post('/orders', function(req, res){
     var dateString = req.body.dateString || null;
     var promise = toast.getOrdersForDate(dateString);
     promise.then(function(res) {
-        console.log(res);
+        // console.log(res);
         res.send({status: res});
     }).catch(function(err) {
-        util.error("Fatal: " + err);
+        console.error("Fatal: " + err);
         res.send({status: err});
-    })
+    });
 });
 
 // Tell express what to do when the /about route is requested.
@@ -63,12 +73,12 @@ function appAuth(cb) {
     console.log('Retrieving auth token');
     var promise = toast.getAuthToken();
     promise.then(function(res) {
-        console.log(res);
+        // console.log(res);
         token = res['access_token'];
-        console.log(token);
+        console.log('token: ' + token);
         cb();
     }).catch(function(err) {
-        util.error("Fatal: " + err);
+        console.error("Fatal: " + err);
     });
 }
 
@@ -80,4 +90,6 @@ appAuth(function() {
     app.listen(PORT,function(){
         console.log("Started on PORT %d", PORT);
     });
+    var dateString = "20170303";
+    getOrdersForDate(dateString);
 });
