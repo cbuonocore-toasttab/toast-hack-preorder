@@ -85,7 +85,7 @@ function appAuth(cb) {
     });
 }
 
-var SCHEDULED_HOUR = 18; // 8
+var SCHEDULED_HOUR = 8;
 
 var nextScheduled = null;
 function scheduleNextRunTime() {
@@ -98,6 +98,7 @@ function scheduleNextRunTime() {
     var formattedRunTime = nextRunTime.format('YYYYMMDD');
     schedule.scheduleJob(nextRunTime.toDate(), function() {
             getOrdersForDate(formattedRunTime);
+            scheduleNextRunTime();
     });
     console.log("Scheduling next Preorder email for : " + nextRunTime.toDate() + 
         " (" + formattedRunTime + ")");
