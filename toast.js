@@ -90,7 +90,7 @@ var library = (function () {
             },
             json: true // Automatically parses the JSON string in the response
         };
-        console.log(options.uri);
+        // console.log(options.uri);
         return rp(options);
     }
 

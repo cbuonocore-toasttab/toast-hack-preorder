@@ -108,7 +108,7 @@ function scheduleNextRunTime() {
 
 var PORT = 3001;
 // Authenticate prior to app start.
-var runServer = true;
+var runServer = false;
 // yyyymmdd
 if (runServer) {
     console.log("Setting up server...")
