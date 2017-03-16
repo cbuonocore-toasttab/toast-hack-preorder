@@ -120,10 +120,10 @@ var library = (function () {
             // Completed order processing.
             // console.log("Aggregated: " + JSON.stringify(aggregated));
             var quantityMap = parseModifiersFromAggregate(aggregated);
-            // fs.writeFile('test/agg2.txt', JSON.stringify(aggregated), (err) => {
-            //     if (err) throw err;
-            //     console.log('It\'s saved!');
-            // });
+            fs.writeFile('test/agg1.txt', JSON.stringify(aggregated), (err) => {
+                if (err) throw err;
+                console.log('It\'s saved!');
+            });
 
             // console.log('qtyMap: ' + JSON.stringify(quantityMap));
             var day = moment(dateString, "YYYYMMDD");
@@ -208,7 +208,7 @@ var library = (function () {
                 });
             });
         });
-       fs.writeFile('test/exp2.txt', JSON.stringify(quantityMap), (err) => {
+       fs.writeFile('test/exp1.txt', JSON.stringify(quantityMap), (err) => {
                 if (err) throw err;
                 console.log('It\'s saved!');
             })
