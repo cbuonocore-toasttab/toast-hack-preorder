@@ -1,12 +1,16 @@
 'use strict';
 // Library containing Toast helper functions for authenticating and accessing orders for the current client.
 var library = (function () {
-    var request = require('request');
-    var rp = require('request-promise');
     var d3 = require("d3");
     var fs = require('fs');
+    var moment = require('moment');
     var nodemailer = require('nodemailer')
+    var request = require('request');
+    var rp = require('request-promise');
     var util = require('util');
+
+    var cssCode = "";//require('./cssCode').cssCode;
+
     // var baseUrl = "https://ws-sandbox.eng.toasttab.com";
     var baseUrl = "https://ws-sandbox-api.eng.toasttab.com/";
     var authUrl = baseUrl + "usermgmt/v1/oauth/token";
@@ -119,7 +123,9 @@ var library = (function () {
             // });
 
             console.log('qtyMap: ' + JSON.stringify(quantityMap));
-            sendOrderEmail("Toast PreOrders for " + dateString, generateEmailContent(quantityMap));
+            var day = moment(dateString, "YYYYMMDD");
+            sendOrderEmail("Toast PreOrders for " + day.format("MM-DD-YYYY"), 
+                generateEmailContent(quantityMap));
             return quantityMap; 
         }
         var order = orders[0];
@@ -195,7 +201,8 @@ var library = (function () {
     }
 
     function generateEmailContent(quantityMap) {
-        var htmlContent = util.format("<h2>Toast Preorders for %s</h2>", clientId); //util.inspect(quantityMap, {depth: null, colors: true}) 
+        var htmlContent = cssCode;
+        htmlContent += util.format("<h2>Toast Preorders for %s</h2>", clientId); //util.inspect(quantityMap, {depth: null, colors: true}) 
         htmlContent += "<table><th>Selections</th><th>Modifiers</th><th>Quantities</th>"
         Object.keys(quantityMap).forEach(function(selection) {
             var mods = quantityMap[selection];
