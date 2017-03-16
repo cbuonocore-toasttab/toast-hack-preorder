@@ -180,11 +180,17 @@ var library = (function () {
                 selections.forEach(function(sel) {
                     var selDispName = sel.displayName;
                     var modifiers = sel.modifiers;
+
                     if (!quantityMap.hasOwnProperty(selDispName)) {
                         quantityMap[selDispName]= {};
                     }
-                    for (var j in modifiers) {
-                        var modifier = modifiers[j];
+
+                    if (modifiers.length == 0) {
+                        quantityMap[selDispName]['-'] = {};
+                        quantityMap[selDispName]['-']['-'] = sel.quantity;
+                    }
+
+                    modifiers.forEach(function(modifier) {
                         var modName = modifier.displayName;
                         var subMods = [];
                         modifier.modifiers.forEach(function(subMod) {
@@ -204,7 +210,7 @@ var library = (function () {
                         } else {
                             quantityMap[selDispName][modName][subModName] = modifier.quantity || 0;
                         }
-                    }
+                    });
                 });
             });
         });
