@@ -12,6 +12,7 @@ var express = require("express");
 var bodyParser = require("body-parser");
 var cors = require('cors');
 var d3 = require("d3");
+
 var util = require('util');
 var app  = express();
 
@@ -87,7 +88,8 @@ function appAuth(cb) {
 var PORT = 3001;
 // Authenticate prior to app start.
 var runServer = true;
-var dateString = "20170303";
+// yyyymmdd
+var dateString = "20170325";
 if (runServer) {
     appAuth(function() {
         app.listen(PORT,function(){
@@ -95,6 +97,13 @@ if (runServer) {
         });
         getOrdersForDate(dateString);
     });
+} else {
+    var content = 'Embedded image: <img src="cid:unique@kreata.ee"/>';
+    var attachments = [{
+            filename: 'image.png',
+            path: './chart.png',
+            cid: 'unique@kreata.ee' //same cid value as in the html img src
+        }];
+    toast.generateChartContent();
 }
-var content = toast.generateChartContent(); 
-toast.sendOrderEmail("Test JS chart", content);
+// toast.sendOrderEmail("Test JS chart", content, attachments);

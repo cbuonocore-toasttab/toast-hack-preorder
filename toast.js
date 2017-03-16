@@ -4,6 +4,7 @@ var library = (function () {
     var request = require('request');
     var rp = require('request-promise');
     var d3 = require("d3");
+    var fs = require('fs');
     var nodemailer = require('nodemailer')
     var util = require('util');
     // var baseUrl = "https://ws-sandbox.eng.toasttab.com";
@@ -21,7 +22,6 @@ var library = (function () {
     var emailPass = process.env.EMAIL_PASS || null;
     // Comma-separated list of recipients for the pre-order emails.
     var emailRecipients = "cbuonocore@toasttab.com, mhuh@toasttab.com";//, fasdfasf@adsfsdf.com";
-    console.log(emailPass)
 
     // create reusable transporter object using the default SMTP transport
     var transporter = nodemailer.createTransport({
@@ -33,8 +33,9 @@ var library = (function () {
     });
 
     // setup email data with unicode symbols
-    function createMailOptions(subject, body) {
+    function createMailOptions(subject, body, attachments) {
         // body = '<b>Hello world</b>';
+
         let mailOptions = {
             from: '"Toast PreOrders 👻" <' + emailSource + '>', // sender address
             to: emailRecipients, // list of receivers
@@ -42,6 +43,9 @@ var library = (function () {
             text: 'Toast Preorders Text',
             html: body// html body
         };
+        if (attachments != undefined && attachments != null) {
+            mailOptions.attachments = attachments;
+        }
         return mailOptions;
     }
 
@@ -109,6 +113,11 @@ var library = (function () {
             // Completed order processing.
             // console.log("Aggregated: " + JSON.stringify(aggregated));
             var quantityMap = parseModifiersFromAggregate(aggregated);
+            // fs.writeFile('test/agg2.txt', JSON.stringify(aggregated), (err) => {
+            //     if (err) throw err;
+            //     console.log('It\'s saved!');
+            // });
+
             console.log('qtyMap: ' + JSON.stringify(quantityMap));
             sendOrderEmail("Toast PreOrders for " + dateString, generateEmailContent(quantityMap));
             return quantityMap; 
@@ -139,8 +148,8 @@ var library = (function () {
 
     // ** Emailing ** //
 
-    function sendOrderEmail(subject, body) {
-        var mailOptions = createMailOptions(subject, body);
+    function sendOrderEmail(subject, body, attachments) {
+        var mailOptions = createMailOptions(subject, body, attachments);
         // send mail with defined transport object.
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -177,6 +186,11 @@ var library = (function () {
                 });
             });
         });
+    //    fs.writeFile('test/exp2.txt', JSON.stringify(quantityMap), (err) => {
+    //             if (err) throw err;
+    //             console.log('It\'s saved!');
+    //         })
+        console.log(JSON.stringify)
         return quantityMap;
     }
 
@@ -207,7 +221,7 @@ var library = (function () {
         var htmlContent = '<script src="https://code.highcharts.com/highcharts.js"></script>'
         htmlContent += '<script src="https://code.highcharts.com/modules/exporting.js"></script>'
         htmlContent += '<div id="container" style="min-width: 310px; height: 400px; max-width: 600px; margin: 0 auto"></div>';
-        htmlContent += `
+        htmlContent += `<script>
        Highcharts.chart('container', {
     chart: {
         plotBackgroundColor: null,
@@ -259,10 +273,42 @@ var library = (function () {
             y: 0.2
         }]
     }]
-});`
+});</script>`;
 
         return htmlContent;
     }
+    var Highcharts = require('highcharts'); 
+
+    function generateChartContent() {
+        var fs = require('fs');
+        var myChart = Highcharts.chart('container', {
+        chart: {
+            type: 'bar'
+        },
+        title: {
+            text: 'Fruit Consumption'
+        },
+        xAxis: {
+            categories: ['Apples', 'Bananas', 'Oranges']
+        },
+        yAxis: {
+            title: {
+                text: 'Fruit eaten'
+            }
+        },
+        series: [{
+            name: 'Jane',
+            data: [1, 0, 4]
+        }, {
+            name: 'John',
+            data: [5, 7, 3]
+        }]
+    });
+            myChart.exportChart({
+                type: 'application/pdf',
+                filename: 'my-pdf'
+            });
+        }
 
     return {
         BASE_URL: baseUrl,
@@ -273,7 +319,9 @@ var library = (function () {
         getOrdersForDate: getOrdersForDate,
         sendOrderEmail: sendOrderEmail,
         aggregateOrders: aggregateOrders,
-        generateChartContent: generateChartContent
+        generateChartContent: generateChartContent,
+        parseModifiersFromAggregate: parseModifiersFromAggregate
+
     };
 })();
 module.exports = library;
