@@ -17,10 +17,11 @@ var library = (function () {
     var secretKey = process.env.MANDY_SECRET || null;
     var restaurantGuid = "d24417d1-fd75-41b8-a45f-c80d9cb41195";
 
-    var emailSource = "toastpreorders@gmail.com";
+    var emailSource = "transientglasses@gmail.com";
     var emailPass = process.env.EMAIL_PASS || null;
     // Comma-separated list of recipients for the pre-order emails.
-    var emailRecipients = "cbuonocore@toasttab.com";//, fasdfasf@adsfsdf.com";
+    var emailRecipients = "cbuonocore@toasttab.com, mhuh@toasttab.com";//, fasdfasf@adsfsdf.com";
+    console.log(emailPass)
 
     // create reusable transporter object using the default SMTP transport
     var transporter = nodemailer.createTransport({
@@ -33,12 +34,12 @@ var library = (function () {
 
     // setup email data with unicode symbols
     function createMailOptions(subject, body) {
-        body = '<b>Hello world</b>';
+        // body = '<b>Hello world</b>';
         let mailOptions = {
             from: '"Toast PreOrders 👻" <' + emailSource + '>', // sender address
             to: emailRecipients, // list of receivers
             subject: subject, // 'Hello ✔', // Subject line
-            text: util.format('Toast Preorders for %s', dateString), // plain text body (to change).
+            text: 'Toast Preorders Text',
             html: body// html body
         };
         return mailOptions;
@@ -105,8 +106,12 @@ var library = (function () {
 
     function recursiveGetInfo(token, aggregated, orders, dateString) {
         if (orders.length == 0) {
-            console.log("Aggregated: " + JSON.stringify(aggregated));
-            return aggregated;
+            // Completed order processing.
+            // console.log("Aggregated: " + JSON.stringify(aggregated));
+            var quantityMap = parseModifiersFromAggregate(aggregated);
+            console.log('qtyMap: ' + JSON.stringify(quantityMap));
+            sendOrderEmail(dateString, quantityMap); 
+            return quantityMap; 
         }
         var order = orders[0];
         getOrderInformation(token, order, dateString).then(function(res) {
@@ -125,7 +130,7 @@ var library = (function () {
         getOrdersForDate(token, dateString).then(function(res) {
             var orders = res;
             console.log('orders: ' + orders.length);
-            return recursiveGetInfo(token, aggregated, [orders[0]], dateString);
+            return recursiveGetInfo(token, aggregated, orders, dateString);
         }).catch(function(err) {
             console.error("Fatal %s", err);
             return aggregated;
@@ -134,8 +139,8 @@ var library = (function () {
 
     // ** Emailing ** //
 
-    function sendOrderEmail(dateString, orders) {
-        var mailOptions = createMailOptions("Toast PreOrders for " + dateString, generateEmailContent(orders));
+    function sendOrderEmail(dateString, quantityMap) {
+        var mailOptions = createMailOptions("Toast PreOrders for " + dateString, generateEmailContent(quantityMap));
         // send mail with defined transport object.
         transporter.sendMail(mailOptions, (error, info) => {
             if (error) {
@@ -145,9 +150,56 @@ var library = (function () {
         });
     }
 
-    function generateEmailContent(orders) {
-        var htmlContent = "";
+    function parseModifiersFromAggregate(aggregateOrders) {
+        var quantityMap = {}
+        Object.keys(aggregateOrders).forEach(function(key) {
+            var order = aggregateOrders[key];
+            console.log("Parsing order: " + JSON.stringify(order));
+            var checks = order['checks'];
+            checks.forEach(function(check) {
+                var selections = check['selections'];
+                selections.forEach(function(sel) {
+                    var selDispName = sel.displayName;
+                    var modifiers = sel.modifiers;
+                    if (!quantityMap.hasOwnProperty(selDispName)) {
+                        quantityMap[selDispName]= {};
+                    }
+                    for (var j in modifiers) {
+                        var modifier = modifiers[j];
+                        var modDispName = modifier.displayName;
+                        console.log(JSON.stringify(modDispName));
+                        if (quantityMap[selDispName].hasOwnProperty(modDispName)) {
+                            quantityMap[selDispName][modDispName] += modifier.quantity || 0;
+                        } else {
+                            quantityMap[selDispName][modDispName] = modifier.quantity || 0;
+                        }
+                    }
+                });
+            });
+        });
+        return quantityMap;
+    }
 
+    function generateEmailContent(quantityMap) {
+        var htmlContent = util.format("<h2>Toast Preorders for %s</h2>", clientId); //util.inspect(quantityMap, {depth: null, colors: true}) 
+        htmlContent += "<table><th>Selections</th><th>Modifiers</th><th>Quantities</th>"
+        Object.keys(quantityMap).forEach(function(selection) {
+            var mods = quantityMap[selection];
+            var modKeys = Object.keys(mods);
+            if (modKeys.length) {
+                modKeys.forEach(function(mod) {
+                    htmlContent += "<tr>"
+                    htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td>", selection, mod, mods[mod]); 
+                    htmlContent += "</tr>"
+                });
+            } else {
+                htmlContent += "<tr>"
+                htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td>", selection, "", "");
+                htmlContent += "</tr>"
+            }
+        });
+        htmlContent += "</table>"
+        console.log(htmlContent);
         return htmlContent;
     }
 
