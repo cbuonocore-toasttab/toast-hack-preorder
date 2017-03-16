@@ -8,10 +8,12 @@
 // ** Imports ** //
 
 // Nodejs libraries.
-var express = require("express");
 var bodyParser = require("body-parser");
 var cors = require('cors');
 var d3 = require("d3");
+var express = require("express");
+var moment = require('moment');
+var schedule = require('node-schedule');
 
 var util = require('util');
 var app  = express();
@@ -71,39 +73,59 @@ app.post('/about', function(req, res){
 });
 
 function appAuth(cb) {
-    console.log('Retrieving auth token');
+    console.log('Retrieving auth token...');
     var promise = toast.getAuthToken();
     promise.then(function(res) {
         // console.log(res);
         token = res['access_token'];
-        console.log('token: ' + token);
+        // console.log('token: ' + token);
         cb();
     }).catch(function(err) {
         console.error("Fatal: " + err);
     });
 }
 
+var nextScheduled = null;
+function scheduleNextRunTime() {
+    var now = moment(new Date());
+    var todayAtEight = moment(now).hours(8).minutes(0).seconds(0)
+    var nextRunTime = todayAtEight;
+    if (now.isAfter(todayAtEight)) {
+        nextRunTime = nextRunTime.add(1, 'days')
+    }
+    var formattedRunTime = nextRunTime.format('YYYYMMDD');
+    schedule.scheduleJob(nextRunTime.toDate(), function() {
+            getOrdersForDate(formattedRunTime);
+    });
+    console.log("Scheduling next Preorder email for : " + nextRunTime.toDate());
+}
+
 // ** Start Server ** //
 
 var PORT = 3001;
 // Authenticate prior to app start.
-var runServer = true;
+var runServer = false;
 // yyyymmdd
 var dateString = "20170325";
 if (runServer) {
+    console.log("Setting up server...")
     appAuth(function() {
         app.listen(PORT,function(){
-            console.log("Started on PORT %d", PORT);
+            console.log("Server started on Port %d", PORT);
+            scheduleNextRunTime();
         });
-        getOrdersForDate(dateString);
     });
 } else {
-    var content = 'Embedded image: <img src="cid:unique@kreata.ee"/>';
-    var attachments = [{
-            filename: 'image.png',
-            path: './chart.png',
-            cid: 'unique@kreata.ee' //same cid value as in the html img src
-        }];
-    toast.generateChartContent();
+    // Retrieve orders now.
+    appAuth(function() {
+        getOrdersForDate(dateString);
+    });
+    // var content = 'Embedded image: <img src="cid:unique@kreata.ee"/>';
+    // var attachments = [{
+    //         filename: 'image.png',
+    //         path: './chart.png',
+    //         cid: 'unique@kreata.ee' //same cid value as in the html img src
+    //     }];
+    // toast.generateChartContent();
 }
 // toast.sendOrderEmail("Test JS chart", content, attachments);

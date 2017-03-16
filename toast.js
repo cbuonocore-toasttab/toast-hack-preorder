@@ -8,8 +8,9 @@ var library = (function () {
     var request = require('request');
     var rp = require('request-promise');
     var util = require('util');
+    var inlineCss = require('nodemailer-juice');
 
-    var cssCode = "";//require('./cssCode').cssCode;
+    var cssCode = require('./cssCode').cssCode;
 
     // var baseUrl = "https://ws-sandbox.eng.toasttab.com";
     var baseUrl = "https://ws-sandbox-api.eng.toasttab.com/";
@@ -19,6 +20,7 @@ var library = (function () {
 
     var clientId = "toast-sweetmandy"
     var namingAuth = "TSTSWEETMANDY"
+    var companyName = "SweetMandy";
     var secretKey = process.env.MANDY_SECRET || null;
     var restaurantGuid = "d24417d1-fd75-41b8-a45f-c80d9cb41195";
 
@@ -35,6 +37,7 @@ var library = (function () {
             pass: emailPass 
         }
     });
+    transporter.use('compile', inlineCss());
 
     // setup email data with unicode symbols
     function createMailOptions(subject, body, attachments) {
@@ -122,10 +125,11 @@ var library = (function () {
             //     console.log('It\'s saved!');
             // });
 
-            console.log('qtyMap: ' + JSON.stringify(quantityMap));
+            // console.log('qtyMap: ' + JSON.stringify(quantityMap));
             var day = moment(dateString, "YYYYMMDD");
-            sendOrderEmail("Toast PreOrders for " + day.format("MM-DD-YYYY"), 
-                generateEmailContent(quantityMap));
+            var formattedDate = day.format("MM-DD-YYYY");
+            var content = generateEmailContent(quantityMap, formattedDate);
+            sendOrderEmail("Toast PreOrders for " + formattedDate, content);
             return quantityMap; 
         }
         var order = orders[0];
@@ -181,46 +185,63 @@ var library = (function () {
                     }
                     for (var j in modifiers) {
                         var modifier = modifiers[j];
-                        var modDispName = modifier.displayName;
-                        console.log(JSON.stringify(modDispName));
-                        if (quantityMap[selDispName].hasOwnProperty(modDispName)) {
-                            quantityMap[selDispName][modDispName] += modifier.quantity || 0;
+                        var modName = modifier.displayName;
+                        var subMods = [];
+                        modifier.modifiers.forEach(function(subMod) {
+                            subMods.push(subMod.displayName);
+                        });
+                        var subModName = "-";
+                        if (subMods.length) subModName = subMods.join(", ");
+
+                        console.log(JSON.stringify(modName) + ": " + subModName);
+
+                        if (!quantityMap[selDispName].hasOwnProperty(modName)) {
+                            quantityMap[selDispName][modName] = {};
+                        }
+
+                        if (quantityMap[selDispName][modName].hasOwnProperty(subModName)) {
+                            quantityMap[selDispName][modName][subModName] += modifier.quantity || 0;
                         } else {
-                            quantityMap[selDispName][modDispName] = modifier.quantity || 0;
+                            quantityMap[selDispName][modName][subModName] = modifier.quantity || 0;
                         }
                     }
                 });
             });
         });
-    //    fs.writeFile('test/exp2.txt', JSON.stringify(quantityMap), (err) => {
-    //             if (err) throw err;
-    //             console.log('It\'s saved!');
-    //         })
-        console.log(JSON.stringify)
+       fs.writeFile('test/exp2.txt', JSON.stringify(quantityMap), (err) => {
+                if (err) throw err;
+                console.log('It\'s saved!');
+            })
         return quantityMap;
     }
 
-    function generateEmailContent(quantityMap) {
+    function generateEmailContent(quantityMap, dateString) {
         var htmlContent = cssCode;
-        htmlContent += util.format("<h2>Toast Preorders for %s</h2>", clientId); //util.inspect(quantityMap, {depth: null, colors: true}) 
-        htmlContent += "<table><th>Selections</th><th>Modifiers</th><th>Quantities</th>"
+        htmlContent += util.format("<h2>Toast Preorders for %s</h2>", companyName); //util.inspect(quantityMap, {depth: null, colors: true}) 
+        htmlContent += util.format("%s<br/><hr/>", dateString); 
+        htmlContent += "<table><th>Selections</th><th>Modifiers</th><th>SubModifiers</th><th>Quantities</th>"
         Object.keys(quantityMap).forEach(function(selection) {
             var mods = quantityMap[selection];
             var modKeys = Object.keys(mods);
             if (modKeys.length) {
                 modKeys.forEach(function(mod) {
-                    htmlContent += "<tr>"
-                    htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td>", selection, mod, mods[mod]); 
-                    htmlContent += "</tr>"
+                    // console.log('mod: ' + JSON.stringify(mod));
+                    Object.keys(mods[mod]).forEach(function(subMod) {
+                        var qty = mods[mod][subMod];
+                        htmlContent += "<tr>"
+                        htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td><td>%s</td>", 
+                            selection, mod, subMod, qty); 
+                        htmlContent += "</tr>"
+                    });
                 });
             } else {
                 htmlContent += "<tr>"
-                htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td>", selection, "", "");
+                htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td><td>%s</td>", selection, "", "", "");
                 htmlContent += "</tr>"
             }
         });
         htmlContent += "</table>"
-        console.log(htmlContent);
+        // console.log(htmlContent);
         return htmlContent;
     }
 
