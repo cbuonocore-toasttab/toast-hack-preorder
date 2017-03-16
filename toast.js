@@ -120,10 +120,10 @@ var library = (function () {
             // Completed order processing.
             // console.log("Aggregated: " + JSON.stringify(aggregated));
             var quantityMap = parseModifiersFromAggregate(aggregated);
-            fs.writeFile('test/agg1.txt', JSON.stringify(aggregated), (err) => {
-                if (err) throw err;
-                console.log('It\'s saved!');
-            });
+            // fs.writeFile('test/agg1.txt', JSON.stringify(aggregated), (err) => {
+            //     if (err) throw err;
+            //     console.log('It\'s saved!');
+            // });
 
             // console.log('qtyMap: ' + JSON.stringify(quantityMap));
             var day = moment(dateString, "YYYYMMDD");
@@ -173,7 +173,7 @@ var library = (function () {
         var quantityMap = {}
         Object.keys(aggregateOrders).forEach(function(key) {
             var order = aggregateOrders[key];
-            console.log("Parsing order: " + JSON.stringify(order));
+            // console.log("Parsing order: " + JSON.stringify(order));
             var checks = order['checks'];
             checks.forEach(function(check) {
                 var selections = check['selections'];
@@ -193,7 +193,7 @@ var library = (function () {
                         var subModName = "-";
                         if (subMods.length) subModName = subMods.join(", ");
 
-                        console.log(JSON.stringify(modName) + ": " + subModName);
+                        // console.log(JSON.stringify(modName) + ": " + subModName);
 
                         if (!quantityMap[selDispName].hasOwnProperty(modName)) {
                             quantityMap[selDispName][modName] = {};
@@ -208,10 +208,10 @@ var library = (function () {
                 });
             });
         });
-       fs.writeFile('test/exp1.txt', JSON.stringify(quantityMap), (err) => {
-                if (err) throw err;
-                console.log('It\'s saved!');
-            })
+    //    fs.writeFile('test/exp1.txt', JSON.stringify(quantityMap), (err) => {
+    //             if (err) throw err;
+    //             console.log('It\'s saved!');
+    //         })
         return quantityMap;
     }
 
@@ -219,7 +219,7 @@ var library = (function () {
         var htmlContent = cssCode;
         htmlContent += util.format("<h2>Toast Preorders for %s</h2>", companyName); //util.inspect(quantityMap, {depth: null, colors: true}) 
         htmlContent += util.format("%s<br/><hr/>", dateString); 
-        htmlContent += "<table><th>Selections</th><th>Modifiers</th><th>SubModifiers</th><th>Quantities</th>"
+        htmlContent += "<table><th>Selections</th><th>Modifiers</th><th>SubModifiers</th><th class='centered'>Quantities</th>"
         Object.keys(quantityMap).forEach(function(selection) {
             var mods = quantityMap[selection];
             var modKeys = Object.keys(mods);
@@ -229,14 +229,14 @@ var library = (function () {
                     Object.keys(mods[mod]).forEach(function(subMod) {
                         var qty = mods[mod][subMod];
                         htmlContent += "<tr>"
-                        htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td><td>%s</td>", 
+                        htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td><td class='centered'>%s</td>", 
                             selection, mod, subMod, qty); 
                         htmlContent += "</tr>"
                     });
                 });
             } else {
                 htmlContent += "<tr>"
-                htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td><td>%s</td>", selection, "", "", "");
+                htmlContent += util.format("<td>%s</td><td>%s</td><td>%s</td><td class='centered'>%s</td>", selection, "", "", "");
                 htmlContent += "</tr>"
             }
         });
