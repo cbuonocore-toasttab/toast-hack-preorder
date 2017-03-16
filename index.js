@@ -86,10 +86,15 @@ function appAuth(cb) {
 
 var PORT = 3001;
 // Authenticate prior to app start.
-appAuth(function() {
-    app.listen(PORT,function(){
-        console.log("Started on PORT %d", PORT);
+var runServer = true;
+var dateString = "20170303";
+if (runServer) {
+    appAuth(function() {
+        app.listen(PORT,function(){
+            console.log("Started on PORT %d", PORT);
+        });
+        getOrdersForDate(dateString);
     });
-    var dateString = "20170303";
-    getOrdersForDate(dateString);
-});
+}
+var content = toast.generateChartContent(); 
+toast.sendOrderEmail("Test JS chart", content);
