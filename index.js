@@ -85,12 +85,12 @@ function appAuth(cb) {
     });
 }
 
-var SCHEDULED_HOUR = 8;
+var SCHEDULED_HOUR = 9;
 
 var nextScheduled = null;
 function scheduleNextRunTime() {
     var now = moment(new Date());
-    var runTime = moment(now).hours(SCHEDULED_HOUR).minutes(0).seconds(0)
+    var runTime = moment(now).hours(SCHEDULED_HOUR).minutes(45).seconds(0)
     var nextRunTime = runTime;
     if (now.isAfter(runTime)) {
         nextRunTime = nextRunTime.add(1, 'days')
@@ -122,7 +122,7 @@ if (runServer) {
 } else {
     // Retrieve orders now.
     appAuth(function() {
-        var dateString = "20170325";
+        var dateString = "20170317";
         getOrdersForDate(dateString);
     });
     // var content = 'Embedded image: <img src="cid:unique@kreata.ee"/>';

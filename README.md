@@ -8,6 +8,7 @@ Delivers email formatted with d3 charts and visualizations for the required mate
 ## Dev Notes
 
 ### Starting the Server
+* Set environment variable dependencies (see index.js for variable naming).
 * npm install
 * node index.js
 
